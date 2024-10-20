@@ -1,28 +1,23 @@
-//Following Member-Access Operators can be demonstrated 
-//using structures only. Please proceed to the main() part
-//of the code as structure declaration will be covered later
-#include <bits/stdc++.h>
-using namespace std;
+// An example of implicit conversion
 
-struct test
-{
-    int x;
-    int *p;
-};
+#include <iostream>
+using namespace std;
 
 int main()
 {
-    struct test t;
-    struct test *ptr_t = &t;
-    
-    t.x = 5;
-    
-    int b = 10;
-    t.p = &b;
-    
-    cout << "Direct Access: " << t.x << endl;
-    cout << "Pointer Access: " << ptr_t->x <<endl;
-    
-    cout << "Direct Access of Pointer: " << *(t.p) << endl;
-    cout << "Pointer Access of Pointer: " << *(ptr_t->p) << endl;
+	int x = 10; // integer x
+	char y = 'a'; // character c
+
+	// y implicitly converted to int. ASCII
+	// value of 'a' is 97
+	x = x + y;
+
+	// x is implicitly converted to float
+	float z = x + 1.0;
+
+	cout << "x = " << x << endl
+		<< "y = " << y << endl
+		<< "z = " << z << endl;
+
+	return 0;
 }
