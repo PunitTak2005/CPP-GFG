@@ -1,3 +1,12 @@
+//{ Driver Code Starts
+#include <bits/stdc++.h>
+using namespace std;
+
+
+// } Driver Code Ends
+
+
+
 class Solution {
   public:
     // Function to keep the maximum result
@@ -53,3 +62,24 @@ class Solution {
         return res;
     }
 };
+
+
+//{ Driver Code Starts.
+
+int main() {
+    int t, k;
+    string str;
+
+    cin >> t;
+    while (t--) {
+        cin >> k >> str;
+        Solution ob;
+        cout << ob.findMaximumNum(str, k) << endl;
+
+        cout << "~"
+             << "\n";
+    }
+    return 0;
+}
+
+// } Driver Code Ends
