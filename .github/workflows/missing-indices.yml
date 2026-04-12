@@ -1,10 +1,30 @@
-ls *.c *.cpp | sed 's/[^0-9]//g' | sort -n | uniq > all_nums.txt
+name: Check missing indices
 
-python3 - << 'PY'
-nums = sorted(set(int(x) for x in open('all_nums.txt') if x.strip()))
-start = min(nums)
-end = max(nums)
-missing = [i for i in range(start, end+1) if i not in nums]
-print("Range:", start, "to", end)
-print("Missing indices:", missing)
-PY
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  missing-indices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find missing indices
+        run: |
+          ls *.c *.cpp | sed 's/[^0-9]//g' | sort -n | uniq > all_nums.txt
+
+          python3 - << 'PY'
+          nums = sorted(set(int(x) for x in open('all_nums.txt') if x.strip()))
+          if not nums:
+              print("No numbered .c/.cpp files found")
+              raise SystemExit(0)
+
+          start = min(nums)
+          end = max(nums)
+          missing = [i for i in range(start, end + 1) if i not in nums]
+          print("Range:", start, "to", end)
+          print("Missing indices:", missing)
+          PY
