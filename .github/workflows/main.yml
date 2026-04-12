@@ -1,0 +1,84 @@
+name: Check C++ filenames
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  check-cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan C/C++ files
+        run: |
+          echo "All .c / .cpp-like files:"
+          find . -maxdepth 1 -regex './[0-9].*' -print | sort
+
+          echo ""
+          echo "== Collect base indices from .c and .cpp =="
+          find . -maxdepth 1 -regex './[0-9].*' -print \
+            | sed 's|^\./||' \
+            | awk '
+                # match e.g. 15.c, 150.cpp, 298.CPP, 395 .cpp, 413cpp
+                {
+                  name = $0
+                  # extract leading number
+                  match(name, /^[0-9]+/)
+                  if (RSTART) {
+                    idx = substr(name, RSTART, RLENGTH)
+                    base[idx] = base[idx] " " name
+                  }
+                }
+                END {
+                  print "Collected indices and names:"
+                  for (i in base) {
+                    print i " ->" base[i]
+                  }
+                }
+              '
+
+      - name: Find indices with only .c (no .cpp)
+        run: |
+          echo "== Indices that have only .c (no proper .cpp) =="
+          find . -maxdepth 1 -regex './[0-9].*' -print \
+            | sed 's|^\./||' \
+            | awk '
+                {
+                  name = $0
+                  match(name, /^[0-9]+/)
+                  if (RSTART) {
+                    idx = substr(name, RSTART, RLENGTH)
+                    if (name ~ /\.c$/ && name !~ /\.cpp$/) {
+                      has_c[idx] = 1
+                    }
+                    if (name ~ /\.cpp$/ && name !~ /[[:space:]]/ && name ~ /[0-9]+\.cpp$/) {
+                      has_cpp[idx] = 1
+                    }
+                  }
+                }
+                END {
+                  for (i in has_c) {
+                    if (!(i in has_cpp)) {
+                      print i
+                    }
+                  }
+                }
+              '
+
+      - name: Detect weird .cpp spellings
+        run: |
+          echo "== Suspicious .cpp-like filenames =="
+          find . -maxdepth 1 -regex './[0-9].*' -print \
+            | sed 's|^\./||' \
+            | awk '
+                # Good pattern: exactly "<number>.cpp"
+                /^[0-9]+\.cpp$/ { next }
+
+                # Everything else that tries to be .cpp but is odd
+                /[Cc][Pp][Pp]/ {
+                  print $0
+                }
+              '
