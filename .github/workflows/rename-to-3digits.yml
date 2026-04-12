@@ -1,0 +1,70 @@
+name: Rename files to 3-digit numbers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rename files
+        run: |
+          set -e
+
+          echo "Renaming files in repo root to 3-digit zero-padded numbers..."
+
+          for f in *; do
+            # skip directories and non-regular files
+            [ -f "$f" ] || continue
+
+            # match leading number
+            base="${f##*/}"
+            num="$(printf '%s' "$base" | sed -n 's/^\([0-9]\+\).*/\1/p')"
+
+            # if no leading number, skip
+            [ -n "$num" ] || continue
+
+            # extract extension (everything after the first dot; may be empty)
+            ext="${base#${num}}"
+            # keep dot + rest as extension (e.g. ".cpp", ".c", ".cpp~")
+            # ext already includes whatever follows the number
+
+            # zero-pad number to 3 digits
+            newnum="$(printf '%03d' "$num")"
+
+            newname="${newnum}${ext}"
+
+            # if same name, skip
+            if [ "$base" = "$newname" ]; then
+              echo "Skip (already ok): $base"
+              continue
+            fi
+
+            # avoid overwriting: if target exists and is different file, warn and skip
+            if [ -e "$newname" ] && [ "$base" != "$newname" ]; then
+              echo "WARNING: target $newname already exists, skipping rename of $base"
+              continue
+            fi
+
+            echo "mv '$base' '$newname'"
+            git mv "$base" "$newname"
+          done
+
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --cached --quiet; then
+            echo "No files renamed; nothing to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Rename numbered files to 3-digit format"
+          git push
