@@ -1,0 +1,10 @@
+ls *.c *.cpp | sed 's/[^0-9]//g' | sort -n | uniq > all_nums.txt
+
+python3 - << 'PY'
+nums = sorted(set(int(x) for x in open('all_nums.txt') if x.strip()))
+start = min(nums)
+end = max(nums)
+missing = [i for i in range(start, end+1) if i not in nums]
+print("Range:", start, "to", end)
+print("Missing indices:", missing)
+PY
